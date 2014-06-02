@@ -3,8 +3,6 @@ colored-squares
 
 random squares
 
-Available on localhost:3000
-
  Steps to setup application:
  1. Install node-js.
  2. run command "npm install" in directory of application.

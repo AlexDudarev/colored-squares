@@ -6,7 +6,7 @@ function getRandomColor() {
         color += letters[Math.floor(Math.random() * 16)];
     }
     return color;
-};
+}
 
 // generate guid
 var guid = (function () {
@@ -67,11 +67,6 @@ function createSquare(squareAttrs) {
     }
 }
 
-function editSquare(squareAttrs) {
-    var square = $('#' + squareAttrs.id);
-    setSquareParams(square, squareAttrs.color, squareAttrs.top, squareAttrs.left);
-}
-
 // after color or position changed send message to server
 function squareEdited(square) {
     socket.emit('square edited', {
@@ -82,22 +77,26 @@ function squareEdited(square) {
     });
 }
 
+//receive message and handle
 socket.on('square created', function (msg) {
     createSquare(msg);
 });
 
-socket.on('square edited', function (msg) {
-    editSquare(msg);
+//receive message and handle
+socket.on('square edited', function (squareAttrs) {
+    var square = $('#' + squareAttrs.id);
+    setSquareParams(square, squareAttrs.color, squareAttrs.top, squareAttrs.left);
 });
 
-// add new square
+// add new square to random position
 $('#addSquare').on('click', function () {
     createSquare();
 });
 
+//change color on dbl click
 $(document).on('dblclick', '.square', function (event) {
     var color = getRandomColor();
     $(this).css('background-color', color);
-    squareEdited($(this))
+    squareEdited($(this));
     event.preventDefault();
 });

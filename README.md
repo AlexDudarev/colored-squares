@@ -8,3 +8,5 @@ random squares
  2. run command "npm install" in directory of application.
  3. run command "node app.js"
  4. now you can open page "localhost:3000" in your browser.
+
+ P.S. Color changing on dbl click on square.

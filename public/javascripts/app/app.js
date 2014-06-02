@@ -8,17 +8,96 @@ function getRandomColor() {
     return color;
 };
 
-// add new square
-$('#addSquare').on('click', function () {
-    var square = $('<div class="square"></div>');
-    $('.pool').append(square);
-    square.draggable();
-    square.css('background-color', getRandomColor());
-    square.css('top', Math.random() * 100 + '%');
-    square.css('left', Math.random() * 100 + '%');
+// generate guid
+var guid = (function () {
+    function s4() {
+        return Math.floor((1 + Math.random()) * 0x10000)
+            .toString(16)
+            .substring(1);
+    }
 
+    return function () {
+        return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+            s4() + '-' + s4() + s4() + s4();
+    };
+})();
+
+//init sockets
+var socket = io();
+
+function setSquareParams(square, paramColor, coordTop, coordLeft) {
+    square.css('background-color', paramColor);
+    square.css('top', coordTop);
+    square.css('left', coordLeft);
+}
+
+// create square from servers request or click
+function createSquare(squareAttrs) {
+    var sqClass = 'square';
+    var squareGuid = guid(),
+        coordTop = (Math.random() * 100) + '%',
+        coordLeft = (Math.random() * 100) + '%',
+        paramColor = getRandomColor();
+
+    if (squareAttrs) {
+        squareGuid = squareAttrs.id;
+        sqClass = 'other-user-square';
+        coordTop = squareAttrs.top;
+        coordLeft = squareAttrs.left;
+        paramColor = squareAttrs.color;
+    }
+
+    var square = $('<div id="' + squareGuid + '" class="' + sqClass + '"></div>');
+    $('.pool').append(square);
+
+    setSquareParams(square, paramColor, coordTop, coordLeft);
+
+    if (!squareAttrs) {
+        square.draggable({
+            stop: function(){
+                squareEdited($(this));
+            }
+        });
+        socket.emit('square created', {
+            id: squareGuid,
+            top: coordTop,
+            left: coordLeft,
+            color: paramColor
+        });
+    }
+}
+
+function editSquare(squareAttrs) {
+    var square = $('#' + squareAttrs.id);
+    setSquareParams(square, squareAttrs.color, squareAttrs.top, squareAttrs.left);
+}
+
+// after color or position changed send message to server
+function squareEdited(square) {
+    socket.emit('square edited', {
+        id: square.attr('id'),
+        top: square.css('top'),
+        left: square.css('left'),
+        color: square.css('background-color')
+    });
+}
+
+socket.on('square created', function (msg) {
+    createSquare(msg);
 });
 
-$(document).on('dblclick', '.square', function () {
-    $(this).css('background-color', getRandomColor());
+socket.on('square edited', function (msg) {
+    editSquare(msg);
+});
+
+// add new square
+$('#addSquare').on('click', function () {
+    createSquare();
+});
+
+$(document).on('dblclick', '.square', function (event) {
+    var color = getRandomColor();
+    $(this).css('background-color', color);
+    squareEdited($(this))
+    event.preventDefault();
 });
